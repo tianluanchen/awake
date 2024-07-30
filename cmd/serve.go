@@ -53,7 +53,7 @@ func init() {
 					logger.Fatalln(err)
 				}
 			}()
-			quit := make(chan os.Signal)
+			quit := make(chan os.Signal, 1)
 			signal.Notify(quit, os.Interrupt)
 			<-quit
 			if err := srv.Shutdown(context.Background()); err != nil {
