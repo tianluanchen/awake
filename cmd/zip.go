@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"awake/pkg"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -117,7 +118,9 @@ var zipCmd = &cobra.Command{
 					return err
 				}
 				if absPath == absOutput {
-					logger.Warnln("skip", path, "because it's output file")
+					if pkg.GetLogLevel() <= pkg.LWARN {
+						fmt.Println("skip", logger.Yellow(path), "because it's output file")
+					}
 					return nil
 				}
 				relPath, err := filepath.Rel(p, path)
@@ -130,14 +133,17 @@ var zipCmd = &cobra.Command{
 					archivePath = filepath.ToSlash(archivePath)
 				}
 				if !all && (excludeRegexp.MatchString(basename) || excludeRegexp.MatchString(archivePath)) {
-					logger.Warnln("skip", path, "because it matched regexp to exclude")
+					if pkg.GetLogLevel() <= pkg.LWARN {
+						fmt.Println("skip", logger.Yellow(path), "because it matched regexp to exclude")
+					}
 					if info.IsDir() {
 						return filepath.SkipDir
 					}
 					return nil
 				}
-				logger.Infoln(path, "=>", archivePath)
-
+				if pkg.GetLogLevel() <= pkg.LINFO {
+					fmt.Println(path, "=>", archivePath)
+				}
 				header, err := zip.FileInfoHeader(info)
 				if err != nil {
 					return err
