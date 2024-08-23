@@ -18,9 +18,10 @@ $ awake --help
 A toolkit
 
 Usage:
-  awake [command]
+  awake [command]  
 
 Available Commands:
+  build       build binary file for golang project
   completion  Generate the autocompletion script for the specified shell
   fetch       Concurrent download of web content to local
   help        Help about any command
@@ -30,12 +31,12 @@ Available Commands:
   tcping      Tcping
   udping      Udping
   unzip       Unarchive zip
-  version     Print the version of awake
   zip         Archive files with zip
 
 Flags:
   -h, --help           help for awake
       --level string   log level, DEBUG INFO WARN ERROR FATAL (default "INFO")
+  -v, --version        version for awake
 
 Use "awake [command] --help" for more information about a command.
 ```
