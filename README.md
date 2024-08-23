@@ -6,6 +6,11 @@ A toolkit.
 
 Download the corresponding executable file for your system from the releases
 
+```bash
+# linux/amd64
+curl -L -o awake  https://github.com/tianluanchen/awake/releases/download/bin/awake_linux_amd64 && chmod +x awake
+```
+
 ## Usage
 
 ```bash
