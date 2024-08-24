@@ -17,6 +17,7 @@ var rootCmd = &cobra.Command{
 	PersistentPreRun: func(cmd *cobra.Command, args []string) {
 		level, _ := cmd.Flags().GetString("level")
 		level = strings.ToUpper(level)
+		pkg.SetLogOutput(os.Stdout)
 		switch level {
 		case "DEBUG":
 			pkg.SetLogLevel(pkg.LDEBUG)
