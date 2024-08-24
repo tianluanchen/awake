@@ -22,19 +22,22 @@ var buildCmd = &cobra.Command{
 		if cocurrency <= 0 {
 			cocurrency = runtime.NumCPU()
 		}
+		targetList, _ := cmd.Flags().GetStringSlice("target")
 		output, _ := cmd.Flags().GetString("output")
+		tags, _ := cmd.Flags().GetString("tags")
 		ldflags, _ := cmd.Flags().GetString("ldflags")
 		trimpath, _ := cmd.Flags().GetBool("trimpath")
+		format, _ := cmd.Flags().GetString("format")
 		list, err := getValidGolangTargets()
 		if err != nil {
 			logger.Fatalln(err)
 		}
-		if len(args) == 0 {
-			args = append(args, runtime.GOOS+"/"+runtime.GOARCH)
+		if len(targetList) == 0 {
+			targetList = append(targetList, runtime.GOOS+"/"+runtime.GOARCH)
 		}
 		set := make(map[string]bool)
 		targets := make([][]string, 0, 16)
-		for _, v := range args {
+		for _, v := range targetList {
 			s := strings.Split(v, "/")
 			if s[0] == "" {
 				s[0] = runtime.GOOS
@@ -74,7 +77,7 @@ var buildCmd = &cobra.Command{
 		}
 		var outputFile string
 		if output == "" && isSingleTarget {
-			outputFile = modName
+			outputFile = fixBinaryFileName(modName, targets[0][0])
 		} else {
 			output = path.Clean(output)
 			info, err := os.Stat(output)
@@ -110,7 +113,7 @@ var buildCmd = &cobra.Command{
 			goos, goarch := s[0], s[1]
 			f := outputFile
 			if f == "" {
-				f = fixBinaryFileName(path.Join(output, fmt.Sprintf("%s_%s_%s", modName, goos, goarch)), goos)
+				f = fixBinaryFileName(path.Join(output, getNameWithFormat(format, modName, goos, goarch)), goos)
 			}
 			fmt.Println("building for", goos+"/"+goarch, "===>", f)
 			wg.Add(1)
@@ -120,13 +123,19 @@ var buildCmd = &cobra.Command{
 					wg.Done()
 					<-ch
 				}()
-				args := []string{"build", "-o", f, "-ldflags", ldflags}
+				cmdArgs := []string{"build", "-o", f, "-ldflags", ldflags}
 				if trimpath {
-					args = append(args,
+					cmdArgs = append(cmdArgs,
 						"-trimpath",
 					)
 				}
-				cmd := exec.Command("go", args...)
+				if tags != "" {
+					cmdArgs = append(cmdArgs,
+						"-tags", tags,
+					)
+				}
+				cmdArgs = append(cmdArgs, args...)
+				cmd := exec.Command("go", cmdArgs...)
 				cmd.Env = append(os.Environ(), "GOOS="+goos, "GOARCH="+goarch)
 				b, err := cmd.CombinedOutput()
 				if err == nil {
@@ -173,7 +182,12 @@ func getGoModName() (string, error) {
 	}
 	return "", errors.New("cannot find module name")
 }
-
+func getNameWithFormat(format string, mod, goos, goarch string) string {
+	format = strings.ReplaceAll(format, "{{.MOD}}", mod)
+	format = strings.ReplaceAll(format, "{{.OS}}", goos)
+	format = strings.ReplaceAll(format, "{{.ARCH}}", goarch)
+	return format
+}
 func getValidGolangTargets() ([]string, error) {
 	cmd := exec.Command("go", "tool", "dist", "list")
 	b, err := cmd.Output()
@@ -187,6 +201,9 @@ func init() {
 	buildCmd.Flags().IntP("cocurrency", "c", 6, "number of concurrent goroutines")
 	buildCmd.Flags().StringP("output", "o", "", "output file or directory")
 	buildCmd.Flags().String("ldflags", "-s -w", "ldflags")
+	buildCmd.Flags().String("tags", "", "tags")
 	buildCmd.Flags().Bool("trimpath", false, "trim path")
+	buildCmd.Flags().StringSlice("target", []string{}, "target os/arch, eg. linux/amd64, windows")
+	buildCmd.Flags().String("format", "{{.MOD}}_{{.OS}}_{{.ARCH}}", "basic name format, if only single target then not working")
 	rootCmd.AddCommand(buildCmd)
 }
