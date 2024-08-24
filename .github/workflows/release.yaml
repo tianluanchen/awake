@@ -34,7 +34,7 @@ jobs:
       run: |
         TAG_NAME="bin"
         NAME="$(date -Iseconds -u)"
-        export LDFLAGS="${LDFLAGS} -X awake/cmd.Version=${NAME}"
+        go run main.go build -o bin --trimpath --ldflags "-s -w -X awake/cmd.Version=${NAME}" --target "linux/amd64,windows/amd64,freebsd/amd64"
         echo "TAG_NAME=${TAG_NAME}" >> "$GITHUB_ENV"
         echo "NAME=${NAME}" >> "$GITHUB_ENV"
         bash build.sh
