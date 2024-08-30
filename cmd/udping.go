@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"net"
@@ -20,6 +21,17 @@ var udpingCmd = &cobra.Command{
 		n, _ := cmd.Flags().GetInt("count")
 		s, _ := cmd.Flags().GetString("string")
 		interval, _ := cmd.Flags().GetDuration("interval")
+		isHex, _ := cmd.Flags().GetBool("hex")
+		var data []byte
+		if isHex {
+			b, err := hex.DecodeString(s)
+			if err != nil {
+				return err
+			}
+			data = b
+		} else {
+			data = []byte(s)
+		}
 		if interval < time.Millisecond*250 {
 			return errors.New("interval too small, minimum 250ms")
 		}
@@ -54,7 +66,7 @@ var udpingCmd = &cobra.Command{
 			start := time.Now()
 			conn, err := net.Dial("udp", addr)
 			if err == nil {
-				_, err = conn.Write([]byte(s))
+				_, err = conn.Write(data)
 				if err == nil {
 					err = conn.SetReadDeadline(time.Now().Add(time.Second * 6))
 					if err == nil {
@@ -92,6 +104,7 @@ var udpingCmd = &cobra.Command{
 
 func init() {
 	udpingCmd.Flags().StringP("string", "s", "ping", "the string to be sent")
+	udpingCmd.Flags().Bool("hex", false, "input as hexadecimal string and decode it")
 	udpingCmd.Flags().DurationP("interval", "i", time.Second, "time between sending each packet, minimum 400ms")
 	udpingCmd.Flags().IntP("count", "c", 3, "ping times, nonpositive number means infinity")
 	rootCmd.AddCommand(udpingCmd)
