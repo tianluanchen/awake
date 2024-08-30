@@ -32,6 +32,7 @@ jobs:
 
     - name: Build 
       run: |
+        go mod tidy
         TAG_NAME="bin"
         NAME="$(date -Iseconds -u)"
         go run main.go build -o bin --trimpath --ldflags "-s -w -X awake/cmd.Version=${NAME}" --target "linux/amd64,windows/amd64,freebsd/amd64"
