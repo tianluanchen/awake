@@ -18,11 +18,12 @@ $ awake --help
 A toolkit
 
 Usage:
-  awake [command]  
+  awake [command]
 
 Available Commands:
   build       build binary file for golang project
-  completion  Generate the autocompletion script for the specified shell
+  completion  Generate the autocompletion script for the specified shell      
+  echo        Start tcp/udp echo server
   fetch       Concurrent download of web content to local
   help        Help about any command
   install     Install to GOPATH BIN
