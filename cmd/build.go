@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"awake/pkg"
 	"bufio"
 	"errors"
 	"fmt"
@@ -139,10 +140,17 @@ var buildCmd = &cobra.Command{
 				cmd.Env = append(os.Environ(), "GOOS="+goos, "GOARCH="+goarch)
 				b, err := cmd.CombinedOutput()
 				if err == nil {
-					fmt.Println(logger.Green("build " + f + " success"))
+					var sizeStr string
+					info, err := os.Stat(f)
+					if err != nil {
+						sizeStr = err.Error()
+					} else {
+						sizeStr = pkg.FormatSize(info.Size())
+					}
+					fmt.Println(logger.Green(f + " (" + sizeStr + ")"))
 					return
 				}
-				fmt.Println(logger.Red("build " + f + " failed: " + string(b)))
+				fmt.Println(logger.Red("failed to build " + f + ": " + string(b)))
 			}()
 		}
 		wg.Wait()
