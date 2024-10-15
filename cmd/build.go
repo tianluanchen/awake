@@ -109,6 +109,7 @@ var buildCmd = &cobra.Command{
 			}
 		}
 		var wg sync.WaitGroup
+		var failed bool
 		ch := make(chan struct{}, cocurrency)
 		for _, s := range targets {
 			goos, goarch := s[0], s[1]
@@ -150,11 +151,15 @@ var buildCmd = &cobra.Command{
 					fmt.Println(logger.Green(f + " (" + sizeStr + ")"))
 					return
 				}
+				failed = true
 				fmt.Println(logger.Red("failed to build " + f + ": " + string(b)))
 			}()
 		}
 		wg.Wait()
 		close(ch)
+		if failed {
+			os.Exit(1)
+		}
 	},
 }
 
