@@ -148,7 +148,7 @@ var buildCmd = &cobra.Command{
 					} else {
 						sizeStr = pkg.FormatSize(info.Size())
 					}
-					fmt.Println(logger.Green(f + " (" + sizeStr + ")"))
+					fmt.Println(logger.Green(f + "    " + sizeStr))
 					return
 				}
 				failed = true
@@ -172,6 +172,7 @@ func fixBinaryFileName(name string, target string) string {
 	}
 	return name
 }
+
 func getGoModName() (string, error) {
 	file, err := os.Open("go.mod")
 	if err != nil {
@@ -195,12 +196,14 @@ func getGoModName() (string, error) {
 	}
 	return "", errors.New("cannot find module name")
 }
+
 func getNameWithFormat(format string, mod, goos, goarch string) string {
 	format = strings.ReplaceAll(format, "{{.MOD}}", mod)
 	format = strings.ReplaceAll(format, "{{.OS}}", goos)
 	format = strings.ReplaceAll(format, "{{.ARCH}}", goarch)
 	return format
 }
+
 func getValidGolangTargets() ([]string, error) {
 	cmd := exec.Command("go", "tool", "dist", "list")
 	b, err := cmd.Output()
