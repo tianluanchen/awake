@@ -27,7 +27,7 @@ var installCmd = &cobra.Command{
 		if gopathList[0] == "" {
 			logger.Fatalln("GOPATH is not set")
 		}
-		name := "awake"
+		name := rootCmd.Name()
 		if runtime.GOOS == "windows" {
 			name += ".exe"
 		}
