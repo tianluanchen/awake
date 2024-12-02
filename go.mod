@@ -1,21 +1,22 @@
 module awake
 
-go 1.23.1
+go 1.23.3
 
 require (
 	github.com/klauspost/compress v1.17.11
 	github.com/mattn/go-isatty v0.0.20
 	github.com/panjf2000/ants/v2 v2.10.0
-	github.com/schollz/progressbar/v3 v3.17.1
+	github.com/shirou/gopsutil/v4 v4.24.11
 	github.com/spf13/cobra v1.8.1
 	golang.org/x/sys v0.27.0
 )
 
 require (
+	github.com/ebitengine/purego v0.8.1 // indirect
+	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/inconshreveable/mousetrap v1.1.0 // indirect
-	github.com/mitchellh/colorstring v0.0.0-20190213212951-d06e56a500db // indirect
-	github.com/rivo/uniseg v0.4.7 // indirect
+	github.com/power-devops/perfstat v0.0.0-20240221224432-82ca36839d55 // indirect
 	github.com/spf13/pflag v1.0.5 // indirect
+	github.com/yusufpapurcu/wmi v1.2.4 // indirect
 	golang.org/x/sync v0.9.0 // indirect
-	golang.org/x/term v0.26.0 // indirect
 )
