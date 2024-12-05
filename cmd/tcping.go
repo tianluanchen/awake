@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -21,7 +22,19 @@ var tcpingCmd = &cobra.Command{
 		interval, _ := cmd.Flags().GetDuration("interval")
 		if interval < time.Millisecond*250 {
 			return errors.New("interval too small, minimum 250ms")
-
+		}
+		if u, err := url.Parse(args[0]); err == nil {
+			host, port := u.Hostname(), u.Port()
+			if port == "" {
+				if u.Scheme == "https" {
+					port = "443"
+				} else if u.Scheme == "http" {
+					port = "80"
+				}
+			}
+			if host != "" && port != "" {
+				args[0] = net.JoinHostPort(host, port)
+			}
 		}
 		tcpAddr, err := net.ResolveTCPAddr("tcp", args[0])
 		if err != nil {

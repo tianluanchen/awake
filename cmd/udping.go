@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"os"
 	"os/signal"
 	"syscall"
@@ -34,6 +35,19 @@ var udpingCmd = &cobra.Command{
 		}
 		if interval < time.Millisecond*250 {
 			return errors.New("interval too small, minimum 250ms")
+		}
+		if u, err := url.Parse(args[0]); err == nil {
+			host, port := u.Hostname(), u.Port()
+			if port == "" {
+				if u.Scheme == "https" {
+					port = "443"
+				} else if u.Scheme == "http" {
+					port = "80"
+				}
+			}
+			if host != "" && port != "" {
+				args[0] = net.JoinHostPort(host, port)
+			}
 		}
 		udpAddr, err := net.ResolveUDPAddr("udp", args[0])
 		if err != nil {

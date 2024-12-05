@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"net"
+	"net/url"
 	"sort"
 	"strconv"
 	"strings"
@@ -31,6 +32,11 @@ func init() {
 		Example: "  awake scan 1.1.1.1 -p 80\n  awake scan 1.1.1.1 -r 80-443",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if u, err := url.Parse(args[0]); err == nil {
+				if v := u.Hostname(); v != "" {
+					args[0] = v
+				}
+			}
 			if !network.IsDomain(args[0]) && !network.IsIP(args[0]) {
 				return fmt.Errorf("invalid host: %s", args[0])
 			}
@@ -73,11 +79,11 @@ func init() {
 			var success int32
 			fmt.Printf("%-5s  %-5s  Duration/Error\n", "Port", "Open")
 			start := time.Now()
-			pool, err := ants.NewPoolWithFunc(concurrency, func(i interface{}) {
+			pool, err := ants.NewPoolWithFunc(concurrency, func(i any) {
 				defer wg.Done()
 				port := i.(int)
 				start := time.Now()
-				conn, err := net.DialTimeout("tcp", fmt.Sprintf("[%s]:%d", ip, port), timeout)
+				conn, err := net.DialTimeout("tcp", net.JoinHostPort(ip, strconv.Itoa(port)), timeout)
 				if err == nil {
 					defer conn.Close()
 					duration := time.Since(start)
