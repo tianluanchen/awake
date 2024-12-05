@@ -27,7 +27,7 @@ func init() {
 
 	portScanCmd := &cobra.Command{
 		Use:     "scan",
-		Short:   "Port scanning",
+		Short:   "TCP port scanning",
 		Example: "  awake scan 1.1.1.1 -p 80\n  awake scan 1.1.1.1 -r 80-443",
 		Args:    cobra.ExactArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
