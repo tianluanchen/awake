@@ -107,7 +107,6 @@ var echoCmd = &cobra.Command{
 func init() {
 	echoCmd.Flags().StringP("addr", "a", "127.0.0.1:8080", "listen address")
 	echoCmd.Flags().Bool("udp", false, "start udp echo server")
-	echoCmd.Flags().Bool("tcp", false, "start tcp echo server")
-	echoCmd.MarkFlagsOneRequired("udp", "tcp")
+	echoCmd.Flags().Bool("tcp", true, "start tcp echo server")
 	rootCmd.AddCommand(echoCmd)
 }
