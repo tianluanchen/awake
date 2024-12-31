@@ -27,7 +27,8 @@ Available Commands:
   help        Help about any command
   install     Install to GOPATH BIN
   killport    Kill processes occupying local ports
-  scan        Port scanning
+  nc          Netcat, only for tcp
+  scan        TCP port scanning
   serve       Start static files server
   tcping      Tcping
   udping      Udping

@@ -8,6 +8,7 @@ require (
 	github.com/panjf2000/ants/v2 v2.10.0
 	github.com/shirou/gopsutil/v4 v4.24.11
 	github.com/spf13/cobra v1.8.1
+	golang.org/x/net v0.33.0
 	golang.org/x/sys v0.28.0
 )
 
