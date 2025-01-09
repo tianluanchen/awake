@@ -22,7 +22,7 @@ Download the corresponding executable file for your system from the releases
 - windows/amd64
 
   ```bash
-  curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_windows_amd64 && chmod +x awake
+  curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_windows_amd64.exe && chmod +x awake
   ```
 
 - freebsd/amd64
