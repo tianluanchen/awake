@@ -6,10 +6,30 @@ A toolkit.
 
 Download the corresponding executable file for your system from the releases
 
-```bash
-# linux/amd64
-curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_linux_amd64 && chmod +x awake
-```
+
+- linux/amd64
+
+  ```bash
+  curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_linux_amd64 && chmod +x awake
+  ```
+
+- linux/arm64
+
+  ```bash
+  curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_linux_arm64 && chmod +x awake
+  ```
+
+- windows/amd64
+
+  ```bash
+  curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_windows_amd64 && chmod +x awake
+  ```
+
+- freebsd/amd64
+
+  ```bash
+  curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_freebsd_amd64 && chmod +x awake
+  ```
 
 ## Usage
 
