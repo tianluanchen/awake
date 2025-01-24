@@ -29,7 +29,7 @@ var echoCmd = &cobra.Command{
 					logger.Fatalln(err)
 				}
 				logger.Infoln("udp echo server listen on", laddr.String())
-				buf := make([]byte, 65507)
+				buf := make([]byte, 65535)
 				for {
 					n, raddr, err := conn.ReadFromUDP(buf)
 					if err != nil {
