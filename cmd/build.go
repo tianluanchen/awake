@@ -24,11 +24,12 @@ var buildCmd = &cobra.Command{
 			cocurrency = runtime.NumCPU()
 		}
 		targetList, _ := cmd.Flags().GetStringSlice("target")
-		output, _ := cmd.Flags().GetString("output")
+		outputDir, _ := cmd.Flags().GetString("output")
 		tags, _ := cmd.Flags().GetString("tags")
 		ldflags, _ := cmd.Flags().GetString("ldflags")
 		trimpath, _ := cmd.Flags().GetBool("trimpath")
 		format, _ := cmd.Flags().GetString("format")
+		env, _ := cmd.Flags().GetStringArray("env")
 		validTargetList, err := getValidGolangTargets()
 		if err != nil {
 			logger.Fatalln(err)
@@ -46,7 +47,7 @@ var buildCmd = &cobra.Command{
 			if len(s) == 1 {
 				s = append(s, runtime.GOARCH)
 			} else if len(s) > 2 {
-				logger.Fatalln("invalid target:", v)
+				logger.Fatalln("invalid target", v)
 			}
 			if s[1] == "" {
 				s[1] = runtime.GOARCH
@@ -60,7 +61,7 @@ var buildCmd = &cobra.Command{
 				}
 			}
 			if !exist {
-				logger.Fatalln("unsupported target:", v)
+				logger.Fatalln("unsupported target", v)
 			}
 			if set[t] {
 				continue
@@ -78,36 +79,17 @@ var buildCmd = &cobra.Command{
 		if err != nil {
 			logger.Fatalln(err)
 		}
-		if len(targets) == 1 {
-			if output == "" {
-				targets[0].Output = targets[0].AddExt(getNameWithFormat(format, modName, targets[0]))
-			} else {
-				if info, err := os.Stat(output); err == nil && info.IsDir() {
-					targets[0].Output = path.Join(output, targets[0].AddExt(getNameWithFormat(format, modName, targets[0])))
-				} else {
-					targets[0].Output = getNameWithFormat(output, modName, targets[0])
-				}
+		outputDir = path.Clean(outputDir)
+		info, err := os.Stat(outputDir)
+		if err == nil {
+			if !info.IsDir() {
+				logger.Fatalln(outputDir, "exists and is not a directory!")
 			}
-		} else {
-			output = path.Clean(output)
-			info, err := os.Stat(output)
-			if err == nil {
-				if !info.IsDir() {
-					logger.Fatalln(output, "is not a directory")
-				}
-			} else {
-				if os.IsNotExist(err) {
-					logger.Warnln("mkdir", output)
-					if err := os.MkdirAll(output, 0755); err != nil {
-						logger.Fatalln(err)
-					}
-				} else {
-					logger.Fatalln(err)
-				}
-			}
-			for _, t := range targets {
-				t.Output = path.Join(output, t.AddExt(getNameWithFormat(format, modName, t)))
-			}
+		} else if !os.IsNotExist(err) {
+			logger.Fatalln(err)
+		}
+		for _, t := range targets {
+			t.Output = path.Join(outputDir, t.AddExt(getNameWithFormat(format, modName, t)))
 		}
 		var wg sync.WaitGroup
 		var failed bool
@@ -134,7 +116,8 @@ var buildCmd = &cobra.Command{
 				}
 				cmdArgs = append(cmdArgs, args...)
 				cmd := exec.Command("go", cmdArgs...)
-				cmd.Env = append(os.Environ(), "GOOS="+t.GOOS, "GOARCH="+t.GOARCH)
+				cmd.Env = append(os.Environ(), env...)
+				cmd.Env = append(cmd.Env, "GOOS="+t.GOOS, "GOARCH="+t.GOARCH)
 				b, err := cmd.CombinedOutput()
 				if err == nil {
 					var sizeStr string
@@ -222,11 +205,12 @@ func getValidGolangTargets() ([]string, error) {
 
 func init() {
 	buildCmd.Flags().IntP("cocurrency", "c", 6, "number of concurrent goroutines")
-	buildCmd.Flags().StringP("output", "o", "", "output file or directory")
+	buildCmd.Flags().StringP("output", "o", ".", "output directory")
 	buildCmd.Flags().String("ldflags", "-s -w", "ldflags")
 	buildCmd.Flags().String("tags", "", "tags")
 	buildCmd.Flags().Bool("trimpath", false, "trim path")
 	buildCmd.Flags().StringSlice("target", []string{}, "target os/arch, eg. linux/amd64, windows")
-	buildCmd.Flags().String("format", "{{.MOD}}_{{.OS}}_{{.ARCH}}", "basic name format, works if output basic name is not specified")
+	buildCmd.Flags().StringArrayP("env", "e", []string{}, "set environment variables, eg. CGO_ENABLED=0")
+	buildCmd.Flags().StringP("format", "f", "{{.MOD}}_{{.OS}}_{{.ARCH}}", "basic name format")
 	rootCmd.AddCommand(buildCmd)
 }
