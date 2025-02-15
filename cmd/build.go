@@ -29,7 +29,7 @@ var buildCmd = &cobra.Command{
 		ldflags, _ := cmd.Flags().GetString("ldflags")
 		trimpath, _ := cmd.Flags().GetBool("trimpath")
 		format, _ := cmd.Flags().GetString("format")
-		list, err := getValidGolangTargets()
+		validTargetList, err := getValidGolangTargets()
 		if err != nil {
 			logger.Fatalln(err)
 		}
@@ -37,7 +37,7 @@ var buildCmd = &cobra.Command{
 			targetList = append(targetList, runtime.GOOS+"/"+runtime.GOARCH)
 		}
 		set := make(map[string]bool)
-		targets := make([][]string, 0, 16)
+		targets := make([]*buildTarget, 0, 16)
 		for _, v := range targetList {
 			s := strings.Split(v, "/")
 			if s[0] == "" {
@@ -53,7 +53,7 @@ var buildCmd = &cobra.Command{
 			}
 			t := strings.Join(s, "/")
 			var exist bool
-			for _, v := range list {
+			for _, v := range validTargetList {
 				if v == t {
 					exist = true
 					break
@@ -66,58 +66,54 @@ var buildCmd = &cobra.Command{
 				continue
 			}
 			set[t] = true
-			targets = append(targets, s)
+			targets = append(targets, &buildTarget{
+				GOOS:   s[0],
+				GOARCH: s[1],
+			})
 		}
 		if len(targets) == 0 {
 			logger.Fatalln("no target specified")
 		}
-		isSingleTarget := len(targets) == 1
 		modName, err := getGoModName()
 		if err != nil {
 			logger.Fatalln(err)
 		}
-		var outputFile string
-		if output == "" && isSingleTarget {
-			outputFile = fixBinaryFileName(modName, targets[0][0])
+		if len(targets) == 1 {
+			if output == "" {
+				targets[0].Output = targets[0].AddExt(getNameWithFormat(format, modName, targets[0]))
+			} else {
+				if info, err := os.Stat(output); err == nil && info.IsDir() {
+					targets[0].Output = path.Join(output, targets[0].AddExt(getNameWithFormat(format, modName, targets[0])))
+				} else {
+					targets[0].Output = getNameWithFormat(output, modName, targets[0])
+				}
+			}
 		} else {
 			output = path.Clean(output)
 			info, err := os.Stat(output)
 			if err == nil {
-				if info.IsDir() {
-					if isSingleTarget {
-						outputFile = fixBinaryFileName(path.Join(output, modName), targets[0][0])
-					}
-				} else {
-					if isSingleTarget {
-						outputFile = output
-					}
+				if !info.IsDir() {
+					logger.Fatalln(output, "is not a directory")
 				}
-			} else if !os.IsNotExist(err) {
-				logger.Fatalln(err)
 			} else {
-				dir := output
-				if isSingleTarget {
-					outputFile = output
-					dir = path.Dir(output)
-				}
-				if dir != "." {
-					logger.Warnln("mkdir", dir)
-					if err := os.MkdirAll(dir, 0755); err != nil {
+				if os.IsNotExist(err) {
+					logger.Warnln("mkdir", output)
+					if err := os.MkdirAll(output, 0755); err != nil {
 						logger.Fatalln(err)
 					}
+				} else {
+					logger.Fatalln(err)
 				}
+			}
+			for _, t := range targets {
+				t.Output = path.Join(output, t.AddExt(getNameWithFormat(format, modName, t)))
 			}
 		}
 		var wg sync.WaitGroup
 		var failed bool
 		ch := make(chan struct{}, cocurrency)
-		for _, s := range targets {
-			goos, goarch := s[0], s[1]
-			f := outputFile
-			if f == "" {
-				f = fixBinaryFileName(path.Join(output, getNameWithFormat(format, modName, goos, goarch)), goos)
-			}
-			fmt.Println("building for", goos+"/"+goarch, "===>", f)
+		for _, t := range targets {
+			fmt.Println("building for", t.OSARCH(), "===>", t.Output)
 			wg.Add(1)
 			ch <- struct{}{}
 			go func() {
@@ -125,7 +121,7 @@ var buildCmd = &cobra.Command{
 					wg.Done()
 					<-ch
 				}()
-				cmdArgs := []string{"build", "-o", f, "-ldflags", ldflags}
+				cmdArgs := []string{"build", "-o", t.Output, "-ldflags", ldflags}
 				if trimpath {
 					cmdArgs = append(cmdArgs,
 						"-trimpath",
@@ -138,21 +134,21 @@ var buildCmd = &cobra.Command{
 				}
 				cmdArgs = append(cmdArgs, args...)
 				cmd := exec.Command("go", cmdArgs...)
-				cmd.Env = append(os.Environ(), "GOOS="+goos, "GOARCH="+goarch)
+				cmd.Env = append(os.Environ(), "GOOS="+t.GOOS, "GOARCH="+t.GOARCH)
 				b, err := cmd.CombinedOutput()
 				if err == nil {
 					var sizeStr string
-					info, err := os.Stat(f)
+					info, err := os.Stat(t.Output)
 					if err != nil {
 						sizeStr = err.Error()
 					} else {
 						sizeStr = pkg.FormatSize(info.Size())
 					}
-					fmt.Println(logger.Green(f + "    " + sizeStr))
+					fmt.Println(logger.Green(t.Output + "    " + sizeStr))
 					return
 				}
 				failed = true
-				fmt.Println(logger.Red("failed to build " + f + ": " + string(b)))
+				fmt.Println(logger.Red("failed to build " + t.Output + ": " + string(b)))
 			}()
 		}
 		wg.Wait()
@@ -163,11 +159,22 @@ var buildCmd = &cobra.Command{
 	},
 }
 
-func fixBinaryFileName(name string, target string) string {
+type buildTarget struct {
+	GOOS   string
+	GOARCH string
+	Output string
+}
+
+func (t *buildTarget) OSARCH() string {
+	return t.GOOS + "/" + t.GOARCH
+}
+
+// if GOOS is windows, add .exe
+func (t *buildTarget) AddExt(name string) string {
 	if strings.HasSuffix(name, ".exe") {
 		return name
 	}
-	if strings.Contains(target, "windows") {
+	if t.GOOS == "windows" {
 		return name + ".exe"
 	}
 	return name
@@ -197,10 +204,10 @@ func getGoModName() (string, error) {
 	return "", errors.New("cannot find module name")
 }
 
-func getNameWithFormat(format string, mod, goos, goarch string) string {
+func getNameWithFormat(format, mod string, t *buildTarget) string {
 	format = strings.ReplaceAll(format, "{{.MOD}}", mod)
-	format = strings.ReplaceAll(format, "{{.OS}}", goos)
-	format = strings.ReplaceAll(format, "{{.ARCH}}", goarch)
+	format = strings.ReplaceAll(format, "{{.OS}}", t.GOOS)
+	format = strings.ReplaceAll(format, "{{.ARCH}}", t.GOARCH)
 	return format
 }
 
@@ -220,6 +227,6 @@ func init() {
 	buildCmd.Flags().String("tags", "", "tags")
 	buildCmd.Flags().Bool("trimpath", false, "trim path")
 	buildCmd.Flags().StringSlice("target", []string{}, "target os/arch, eg. linux/amd64, windows")
-	buildCmd.Flags().String("format", "{{.MOD}}_{{.OS}}_{{.ARCH}}", "basic name format, if only single target then not working")
+	buildCmd.Flags().String("format", "{{.MOD}}_{{.OS}}_{{.ARCH}}", "basic name format, works if output basic name is not specified")
 	rootCmd.AddCommand(buildCmd)
 }
