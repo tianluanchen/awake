@@ -5,10 +5,10 @@ go 1.23.6
 require (
 	github.com/klauspost/compress v1.17.11
 	github.com/mattn/go-isatty v0.0.20
-	github.com/panjf2000/ants/v2 v2.11.0
+	github.com/panjf2000/ants/v2 v2.11.1
 	github.com/shirou/gopsutil/v4 v4.25.1
 	github.com/spf13/cobra v1.8.1
-	golang.org/x/net v0.34.0
+	golang.org/x/net v0.35.0
 	golang.org/x/sys v0.30.0
 )
 
