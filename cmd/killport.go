@@ -2,7 +2,6 @@ package cmd
 
 import (
 	"awake/pkg"
-	"awake/pkg/network"
 	"errors"
 	"strconv"
 
@@ -24,7 +23,7 @@ var killPortCmd = &cobra.Command{
 		portMap := make(map[int]struct{})
 		for i := 0; i < len(args); i++ {
 			p, err := strconv.Atoi(args[i])
-			if err == nil && !network.IsValidPort(p) {
+			if err == nil && !pkg.IsValidPort(p) {
 				err = errors.New("port must be between 0 and 65535")
 			}
 			if err != nil {

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"awake/pkg/network"
+	"awake/pkg"
 	"errors"
 	"fmt"
 	"net"
@@ -37,7 +37,7 @@ func init() {
 					args[0] = v
 				}
 			}
-			if !network.IsDomain(args[0]) && !network.IsIP(args[0]) {
+			if !pkg.IsDomainName(args[0]) && !pkg.IsIP(args[0]) {
 				return fmt.Errorf("invalid host: %s", args[0])
 			}
 			addrs, err := net.LookupHost(args[0])
