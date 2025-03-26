@@ -15,7 +15,7 @@ on:
 jobs:
 
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     defaults:
       run:
         shell: bash
@@ -35,7 +35,7 @@ jobs:
         go mod tidy
         TAG_NAME="bin"
         NAME="$(date -Iseconds -u)"
-        go run main.go build -o bin --trimpath --ldflags "-s -w -X awake/cmd.Version=${NAME}" --target "linux/amd64,linux/arm64,windows/amd64,freebsd/amd64"
+        go run main.go build -o bin -e CGO_ENABLED=0 --trimpath --ldflags "-s -w -X awake/cmd.Version=${NAME}" --target "linux/amd64,linux/arm64,windows/amd64,freebsd/amd64"
         echo "TAG_NAME=${TAG_NAME}" >> "$GITHUB_ENV"
         echo "NAME=${NAME}" >> "$GITHUB_ENV"
 

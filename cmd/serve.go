@@ -1,11 +1,13 @@
 package cmd
 
 import (
+	"awake/pkg"
 	"context"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"time"
 
 	"github.com/spf13/cobra"
@@ -48,6 +50,15 @@ func init() {
 				}),
 			}
 			go func() {
+				if resolved, err := pkg.ResolveListenAddr(addr); err == nil {
+					for _, v := range resolved {
+						if strings.HasPrefix(v, "127.0.0.1") || strings.HasPrefix(v, "::1") || strings.HasPrefix(v, "localhost") {
+							fmt.Printf("Local:   http://%s\n", v)
+						} else {
+							fmt.Printf("Network: http://%s\n", v)
+						}
+					}
+				}
 				logger.Infoln("Server starting on", addr, "and serving", dir)
 				if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 					logger.Fatalln(err)
