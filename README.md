@@ -6,30 +6,29 @@ A toolkit.
 
 Download the corresponding executable file for your system from the releases
 
+-   linux/amd64
 
-- linux/amd64
+    ```bash
+    curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_linux_amd64 && chmod +x awake
+    ```
 
-  ```bash
-  curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_linux_amd64 && chmod +x awake
-  ```
+-   linux/arm64
 
-- linux/arm64
+    ```bash
+    curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_linux_arm64 && chmod +x awake
+    ```
 
-  ```bash
-  curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_linux_arm64 && chmod +x awake
-  ```
+-   windows/amd64
 
-- windows/amd64
+    ```bash
+    curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_windows_amd64.exe && chmod +x awake
+    ```
 
-  ```bash
-  curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_windows_amd64.exe && chmod +x awake
-  ```
+-   freebsd/amd64
 
-- freebsd/amd64
-
-  ```bash
-  curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_freebsd_amd64 && chmod +x awake
-  ```
+    ```bash
+    curl -L -o awake https://github.com/tianluanchen/awake/releases/download/bin/awake_freebsd_amd64 && chmod +x awake
+    ```
 
 ## Usage
 
@@ -53,6 +52,7 @@ Available Commands:
   tcping      Tcping
   udping      Udping
   unzip       Unarchive zip
+  upload      Upload files
   zip         Archive files with zip
 
 Flags:
