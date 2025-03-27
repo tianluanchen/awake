@@ -3,6 +3,8 @@ package cmd
 import (
 	"awake/pkg"
 	"bufio"
+	"crypto/tls"
+	"encoding/base64"
 	"errors"
 	"net"
 	"net/http"
@@ -38,22 +40,33 @@ func dialTCPWithProxy(proxyURL string, targetAddr string) (net.Conn, error) {
 			}
 			proxyURI.Host = net.JoinHostPort(proxyURI.Host, port)
 		}
-		tcpConn, err := net.Dial("tcp", proxyURI.Host)
+		conn, err := net.Dial("tcp", proxyURI.Host)
 		if err != nil {
 			return nil, err
 		}
-		// HTTP Proxy
+		if proxyURI.Scheme == "https" {
+			conn = tls.Client(conn, &tls.Config{
+				ServerName: proxyURI.Hostname(),
+				NextProtos: []string{"http/1.1"},
+			})
+		}
 		req := &http.Request{
 			Method:     http.MethodConnect,
 			Host:       targetAddr,
 			RequestURI: targetAddr,
 			URL:        proxyURI,
 		}
-		err = req.Write(tcpConn)
+		if user := proxyURI.User; user != nil {
+			pwd, _ := user.Password()
+			req.Header = http.Header{
+				"Proxy-Authorization": {"Basic " + base64.StdEncoding.EncodeToString([]byte(user.Username()+":"+pwd))},
+			}
+		}
+		err = req.Write(conn)
 		if err != nil {
 			return nil, err
 		}
-		bufR := bufio.NewReader(tcpConn)
+		bufR := bufio.NewReader(conn)
 		resp, err := http.ReadResponse(bufR, req)
 		if err != nil {
 			return nil, err
@@ -61,13 +74,20 @@ func dialTCPWithProxy(proxyURL string, targetAddr string) (net.Conn, error) {
 		if resp.StatusCode != http.StatusOK {
 			return nil, errors.New(resp.Status)
 		}
-		return &readerConn{reader: bufR, Conn: tcpConn}, nil
+		return &readerConn{reader: bufR, Conn: conn}, nil
 	case "socks5":
 		if proxyURI.Port() == "" {
 			proxyURI.Host = net.JoinHostPort(proxyURI.Host, "1080")
 		}
-		// SOCKS5 Proxy
-		dialer, err := proxy.SOCKS5("tcp", proxyURI.Host, nil, proxy.Direct)
+		var auth *proxy.Auth
+		if user := proxyURI.User; user != nil {
+			pwd, _ := user.Password()
+			auth = &proxy.Auth{
+				User:     user.Username(),
+				Password: pwd,
+			}
+		}
+		dialer, err := proxy.SOCKS5("tcp", proxyURI.Host, auth, proxy.Direct)
 		if err != nil {
 			return nil, err
 		}
