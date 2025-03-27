@@ -103,10 +103,3 @@ func IsDomainName(s string) bool {
 
 	return nonNumeric
 }
-
-func IsValidPort(port int) bool {
-	if port < 1 || port > 65535 {
-		return false
-	}
-	return true
-}

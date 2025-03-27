@@ -21,9 +21,9 @@ var killPortCmd = &cobra.Command{
 		}
 		ports := make([]int, 0)
 		portMap := make(map[int]struct{})
-		for i := 0; i < len(args); i++ {
+		for i := range len(args) {
 			p, err := strconv.Atoi(args[i])
-			if err == nil && !pkg.IsValidPort(p) {
+			if err == nil && (p < 0 || p > 65535) {
 				err = errors.New("port must be between 0 and 65535")
 			}
 			if err != nil {

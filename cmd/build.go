@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path"
 	"runtime"
+	"slices"
 	"strings"
 	"sync"
 
@@ -53,14 +54,7 @@ var buildCmd = &cobra.Command{
 				s[1] = runtime.GOARCH
 			}
 			t := strings.Join(s, "/")
-			var exist bool
-			for _, v := range validTargetList {
-				if v == t {
-					exist = true
-					break
-				}
-			}
-			if !exist {
+			if !slices.Contains(validTargetList, t) {
 				logger.Fatalln("unsupported target", v)
 			}
 			if set[t] {

@@ -13,7 +13,6 @@ import (
 	"sync/atomic"
 	"time"
 
-	"github.com/panjf2000/ants/v2"
 	"github.com/spf13/cobra"
 )
 
@@ -76,33 +75,32 @@ func init() {
 			fmt.Printf("Scanning %s (%s) with %d ports at %s\n", args[0], ip, len(ports), time.Now().Format(time.RFC3339))
 			var wg sync.WaitGroup
 			wg.Add(len(ports))
+			ch := make(chan struct{}, concurrency)
 			var success int32
 			fmt.Printf("%-5s  %-5s  Duration/Error\n", "Port", "Open")
 			start := time.Now()
-			pool, err := ants.NewPoolWithFunc(concurrency, func(i any) {
-				defer wg.Done()
-				port := i.(int)
-				start := time.Now()
-				conn, err := net.DialTimeout("tcp", net.JoinHostPort(ip, strconv.Itoa(port)), timeout)
-				if err == nil {
-					defer conn.Close()
-					duration := time.Since(start)
-					atomic.AddInt32(&success, 1)
-					fmt.Printf("%-5d  true   %v\n", port, duration)
-				} else if verbose {
-					fmt.Printf("%-5d  false  %v\n", port, err)
-				}
-			})
-			if err != nil {
-				panic(err)
-			}
 			for _, p := range ports {
-				if err := pool.Invoke(p); err != nil {
-					panic(err)
-				}
+				ch <- struct{}{}
+				go func(port int) {
+					defer func() {
+						<-ch
+						wg.Done()
+					}()
+					start := time.Now()
+					conn, err := net.DialTimeout("tcp", net.JoinHostPort(ip, strconv.Itoa(port)), timeout)
+					if err == nil {
+						defer conn.Close()
+						duration := time.Since(start)
+						atomic.AddInt32(&success, 1)
+						fmt.Printf("%-5d  true   %v\n", port, duration)
+					} else if verbose {
+						fmt.Printf("%-5d  false  %v\n", port, err)
+					}
+				}(p)
 			}
 			wg.Wait()
 			fmt.Printf("\nTotal Time: %v  Num: %d  Open: %d  Closed: %d", time.Since(start), len(ports), success, len(ports)-int(success))
+			close(ch)
 			return nil
 		},
 	}
