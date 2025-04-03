@@ -1,13 +1,13 @@
 module awake
 
-go 1.24.1
+go 1.24.2
 
 require (
 	github.com/klauspost/compress v1.18.0
 	github.com/mattn/go-isatty v0.0.20
-	github.com/shirou/gopsutil/v4 v4.25.2
+	github.com/shirou/gopsutil/v4 v4.25.3
 	github.com/spf13/cobra v1.9.1
-	golang.org/x/net v0.37.0
+	golang.org/x/net v0.38.0
 	golang.org/x/sys v0.31.0
 )
 
